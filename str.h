@@ -17,6 +17,7 @@ typedef unsigned int uint32_t;
 typedef int int32_t;
 #define vsnprintf _vsnprintf
 #define snprintf _snprintf
+#define inline __inline
 #else
 #include <stdint.h>
 #endif
