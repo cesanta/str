@@ -1,8 +1,8 @@
 # Single header string library for microcontrollers
 
 [![License: AGPLv3/Commercial](https://img.shields.io/badge/License-AGPLv3%20or%20Commercial-green.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Build Status](https://github.com/cpq/x/workflows/test/badge.svg)](https://github.com/cpq/x/actions)
-[![Code Coverage](https://codecov.io/gh/cpq/x/branch/main/graph/badge.svg?token=B5LH9CRPQT)](https://codecov.io/gh/cpq/x)
+[![Build Status](https://github.com/cesanta/str/workflows/test/badge.svg)](https://github.com/cesanta/str/actions)
+[![Code Coverage](https://codecov.io/gh/cesanta/str/branch/main/graph/badge.svg?token=B5LH9CRPQT)](https://codecov.io/gh/cesanta/str)
 
 Single header string library for microcontrollers implements the
 following routines:
@@ -88,15 +88,13 @@ size_t xvsnprintf(char *buf, size_t len, const char *fmt, va_list *ap);
 size_t xsnprintf(char *buf, size_t len, const char *fmt, ...);
 ```
 
-Print formatted string into a fixed-size buffer. These functions use the
-`x*xprintf()` and an [output function that prints to a fixed-size
-buffer](https://github.com/cpq/x/blob/b9ff53f434375486a60dec53b3090d180a73f6e9/micro_printf.c#L37-L53).
-Parameters:
+Print formatted string into a fixed-size buffer. Parameters:
 - `buf` - a buffer to print to. Can be NULL, in this case `len` must be 0
 - `len` - a size of the `buf`
 - `fmt` - a format string. Supports all specifiers mentioned above
 
-Return value: number of bytes printed. The result is guaranteed to be NUL terminated
+Return value: number of bytes printed. The result is guaranteed to be NUL
+terminated.
 
 ### Pre-defined `%M` format functions
 
@@ -174,7 +172,7 @@ The following table contains footprint measurements for the ARM Cortex-M0 and
 ARM Cortex-M7 builds of `xsnprintf()` compared to the standard `snprintf()`.
 The compilation is done with `-Os` flag using ARM GCC 10.3.1.  See
 [test/footprint.c](test/footprint.c) and the corresponding
-[Makefile snippet](https://github.com/cpq/x/blob/690ea5b3e049f229967bdddea239542b36b246b4/test/Makefile#L44-L60)
+[Makefile snippet](https://github.com/cesanta/str/blob/1f26b01c6277be329b264caa4597c6ad655ff135/test/Makefile#L47-L63)
 used for measurements.
 
 |                            | Cortex-M0 | Cortex-M7 |
