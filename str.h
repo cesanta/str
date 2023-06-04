@@ -375,6 +375,7 @@ XAPI size_t xvprintf(xout_t out, void *param, const char *fmt, va_list *ap) {
 }
 
 #endif  // STR_API_ONLY
+
 #ifdef __cplusplus
 }
 #endif
