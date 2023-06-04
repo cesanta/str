@@ -193,7 +193,7 @@ This library is licensed under the dual license:
 - Open source projects are covered by the GNU Affero 3.0 license
 - Commercial projects/products are covered by the commercial,
   permanent, royalty free license:
-  - Buy a [single product license](https://buy.stripe.com/9AQaHI1Uud1U4msaEG) - covers a single product only
-  - Buy a [company wide license](https://buy.stripe.com/3csaHIar09PI4ms8wx) - covers any product of the licensed company
+  - Buy a [single product license](https://buy.stripe.com/9AQaHI1Uud1U4msaEG) - covers a single company's product
+  - Buy a [company wide license](https://buy.stripe.com/3csaHIar09PI4ms8wx) - covers all company's products
 
 - For licensing questions, [contact us](https://mongoose.ws/contact/)
