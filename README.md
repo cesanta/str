@@ -28,6 +28,7 @@ void xputchar(char ch, void *param) {
   HAL_UART_Transmit(param, &ch, 1, 100);
 }
 
+// To enable printf, add "#define ENABLE_PRINTF" line before #include "str.h"
 printf("JSON: {%m: %g}\n", ESC("value"), 1.234);   // JSON: {"value": 1.234}
 ```
 
