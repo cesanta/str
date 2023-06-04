@@ -79,6 +79,7 @@ static void test_std(void) {
   assert(sn("%#x", 15));
   assert(sn("%#6x", 15));
   assert(sn("%#06x", 15));
+  assert(sn("%#02x", 11));
   assert(sn("%#-6x", 15));
   assert(sn("%-2s!", "a"));
   assert(sn("%s %s", "a", "b"));
@@ -151,6 +152,11 @@ static void test_float(void) {
 #endif
 }
 
+static void xputchar(char ch, void *arg) {
+  putchar(ch);
+  (void) arg;
+}
+
 static void test_m(void) {
   uint8_t mac[6] = {1, 2, 3, 4, 5, 6};     // MAC address
   uint8_t ip6[16] = {1, 100, 33};          // IPv6 address
@@ -164,6 +170,12 @@ static void test_m(void) {
   assert(sf("_eHl6_123", "_%M_%d", fmt_b64, 3, "xyz", 123));
   assert(sf(quo, "_%m_%d", fmt_ip4, &ip4, 123));
   assert(sf(quo, "_%m_%d", ESC("127.0.0.1"), 123));
+
+  xprintf(xputchar, NULL, "%s: %g\n", "dbl", 1.234);
+  xprintf(xputchar, NULL, "%.*s\n", 3, "foobar");
+  xprintf(xputchar, NULL, "%#04x\n", 11);
+  xprintf(xputchar, NULL, "%d %5s\n", 7, "pad");
+  xprintf(xputchar, NULL, "JSON: {%m: %g}\n", ESC("value"), 1.234);
 }
 
 int main(void) {

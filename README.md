@@ -18,17 +18,17 @@ following routines:
 ```c
 // Print into a buffer
 char buf[100];
-xsnprintf(buf, sizeof(buf), "Hello, %s! Float: %g", "world", 1.234);
-xsnprintf(buf, sizeof(buf), "Width via arg: %.*s", 3, "foobar");
-xsnprintf(buf, sizeof(buf), "Width, padding: %02x", 123);
-xsnprintf(buf, sizeof(buf), "Alignment: %-15s", "hi");
+xsnprintf(buf, sizeof(buf), "%s: %g\n", "dbl", 1.234);  // dbl: 1.234
+xsnprintf(buf, sizeof(buf), "%.*s\n", 3, "foobar");     // foo
+xsnprintf(buf, sizeof(buf), "%#04x\n", 11);             // 0x0b
+xsnprintf(buf, sizeof(buf), "%d %5s\n", 7, "pad");      // 7   pad
 
 // Define printing function for printf()
 void xputchar(char ch, void *param) {
   HAL_UART_Transmit(param, &ch, 1, 100);
 }
 
-printf("We can print JSON: {%m: %g}\n", ESC("value"), 1.234);
+printf("JSON: {%m: %g}\n", ESC("value"), 1.234);   // JSON: {"value": 1.234}
 ```
 
 ## API reference
