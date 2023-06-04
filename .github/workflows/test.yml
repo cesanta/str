@@ -1,0 +1,39 @@
+name: test
+on:
+  push:
+    paths: ["**Makefile", "**.c", "**.h", "**.ino"]
+jobs:
+  Linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: make -C test clean run CC=gcc
+    - run: make -C test clean run CC=clang
+    - run: make -C test clean run CC=g++
+    - run: make -C test clean run CC=clang++
+    - run: make -C test clean upload-coverage
+  MacOS:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: make -C test clean run CC=gcc
+    - run: make -C test clean run CC=clang
+    - run: make -C test clean run CC=g++
+    - run: make -C test clean run CC=clang++
+  Windows:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: make -C test vc22
+    - run: make -C test vc98
+  ArduinoUno:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: make -C test uno
+  Arm:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: sudo apt -y update; sudo apt -y install gcc-arm-none-eabi
+    - run: make -C test arm
