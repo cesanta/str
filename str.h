@@ -44,6 +44,8 @@ XAPI size_t fmt_mac(void (*out)(char, void *), void *arg, va_list *ap);
 XAPI size_t fmt_b64(void (*out)(char, void *), void *arg, va_list *ap);
 XAPI size_t fmt_esc(void (*out)(char, void *), void *arg, va_list *ap);
 
+XAPI int json_parse(const char *buf, size_t len, int *tokens);
+
 #if !defined(STR_API_ONLY)
 typedef void (*xout_t)(char, void *);                 // Output function
 typedef size_t (*xfmt_t)(xout_t, void *, va_list *);  // %M format function
@@ -113,7 +115,6 @@ XAPI size_t xstrlen(const char *s) {
   return n;
 }
 
-#if !defined(NO_FLOAT)
 XAPI int addexp(char *buf, int e, int sign) {
   int n = 0;
   buf[n++] = 'e';
@@ -203,7 +204,52 @@ static size_t xdtoa(char *dst, size_t dstlen, double d, int width, int tz) {
   buf[n] = '\0';
   return xsnprintf(dst, dstlen, "%s", buf);
 }
-#endif
+
+XAPI double xatod(const char *p, int len, int *numlen) {
+  double d = 0.0;
+  int i = 0, sign = 1;
+
+  // Sign
+  if (i < len && *p == '-') {
+    sign = -1, i++;
+  } else if (i < len && *p == '+') {
+    i++;
+  }
+
+  // Decimal
+  for (; i < len && p[i] >= '0' && p[i] <= '9'; i++) {
+    d *= 10.0;
+    d += p[i] - '0';
+  }
+  d *= sign;
+
+  // Fractional
+  if (i < len && p[i] == '.') {
+    double frac = 0.0, base = 0.1;
+    i++;
+    for (; i < len && p[i] >= '0' && p[i] <= '9'; i++) {
+      frac += base * (p[i] - '0');
+      base /= 10.0;
+    }
+    d += frac * sign;
+  }
+
+  // Exponential
+  if (i < len && (p[i] == 'e' || p[i] == 'E')) {
+    int j, exp = 0, minus = 0;
+    i++;
+    if (i < len && p[i] == '-') minus = 1, i++;
+    if (i < len && p[i] == '+') i++;
+    while (i < len && p[i] >= '0' && p[i] <= '9' && exp < 308)
+      exp = exp * 10 + (p[i++] - '0');
+    if (minus) exp = -exp;
+    for (j = 0; j < exp; j++) d *= 10.0;
+    for (j = 0; j < -exp; j++) d /= 10.0;
+  }
+
+  if (numlen != NULL) *numlen = i;
+  return d;
+}
 
 XAPI size_t xlld(char *buf, int64_t val, int is_signed, int is_hex) {
   const char *letters = "0123456789abcdef";
@@ -321,9 +367,9 @@ XAPI size_t xvprintf(xout_t out, void *param, const char *fmt, va_list *ap) {
           double v = va_arg(*ap, double);
           if (pr == ~0U) pr = 6;
           k = xdtoa(tmp, sizeof(tmp), v, (int) pr, c == 'g');
-        } else 
+        } else
 #endif
-          if (is_long == 2) {
+            if (is_long == 2) {
           int64_t v = va_arg(*ap, int64_t);
           k = xlld(tmp, v, s, h);
         } else if (is_long == 1) {

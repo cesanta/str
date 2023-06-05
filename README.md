@@ -12,6 +12,7 @@ following routines:
   non-standard `%m` and `%M` specifiers that allow custom formatting like JSON,
   hex, base64
 - `xdtoa()` - convert `double` to string
+- `xatod()` - convert string to `double`
 
 ## Usage example
 

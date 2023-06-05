@@ -14,7 +14,7 @@ endif
 run: $(PROG)
 	$(RUN) ./$(PROG) $(ARGS)
 
-$(PROG): $(SOURCES)
+$(PROG): $(SOURCES) ../str.h
 	$(CC) $(SOURCES) $(CFLAGS) $(CFLAGS_EXTRA) -o $@
 
 vc22:
