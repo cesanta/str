@@ -179,10 +179,22 @@ static void test_m(void) {
   xprintf(out, NULL, "JSON: {%m: %g}\n", ESC("value"), 1.234);
 }
 
+static void test_json(void) {
+  char buf[100];
+  char *json = "{ \"a\": -42, \"b\": \"hi\", \"c\": true }";
+  int b = 0;
+  assert(json_get_long(json, (int) strlen(json), "$.a", 0) == -42);
+  assert(json_get_str(json, (int) strlen(json), "$.b", buf, sizeof(buf)) == 2);
+  assert(strcmp(buf, "hi") == 0);
+  assert(json_get_bool(json, (int) strlen(json), "$.c", &b) == 1);
+  assert(b == 1);
+}
+
 int main(void) {
   test_std();
   test_float();
   test_m();
+  test_json();
   printf("SUCCESS\n");
   return 0;
 }

@@ -625,7 +625,7 @@ XAPI int json_unescape(const char *buf, size_t len, char *to, size_t n) {
 XAPI int json_get_num(const char *buf, int len, const char *path, double *v) {
   int found = 0, n = 0, off = json_get(buf, len, path, &n);
   if (off >= 0 && (buf[off] == '-' || (buf[off] >= '0' && buf[off] <= '9'))) {
-    if (v != NULL) *v = xatod(buf + n, n, NULL);
+    if (v != NULL) *v = xatod(buf + off, n, NULL);
     found = 1;
   }
   return found;
