@@ -24,7 +24,7 @@ Printing to a buffer: https://github.com/cesanta/str/blob/873b39dd14b074bf0779f5
 
 Print to the UART, JSON and base64 format: https://github.com/cesanta/str/blob/7e05d658a0f89b2bda67dda8cc1a912d0e2b7cba/test/main.ino#L11-L12
 
-Parse JSON: https://github.com/cesanta/str/blob/52ce52b4e62a8ec16c2988332e97cafe43553640/test/main.c#L183-L190
+Parse JSON: https://github.com/cesanta/str/blob/813e08acf4e389690830bfb5ff525c9e79bdb362/test/main.c#L183-L190
 
 ## API reference
 
