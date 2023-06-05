@@ -98,7 +98,7 @@ Print formatted string into a fixed-size buffer. Parameters:
 Return value: number of bytes printed. The result is guaranteed to be NUL
 terminated.
 
-### Pre-defined `%M` format functions
+### Pre-defined `%M`, `%m` format functions
 
 ```c
 size_t fmt_*(void (*out)(char, void *), void *arg, va_list *ap);
@@ -109,28 +109,28 @@ Pre-defined helper functions for `%M` specifier:
 - `fmt_ip6` - print IPv6 address. Expect a pointer to 16-byte IPv6 address
 - `fmt_mac` - print MAC address. Expect a pointer to 6-byte MAC address
 - `fmt_b64` - print base64 encoded data. Expect `int`, `void *`
-- `fmt_esc` - print a string, escaping `\n`, `\t`, `\r`, `"`. Espects `char *`
+- `fmt_esc` - print a string, escaping `\n`, `\t`, `\r`, `"`. Espects `int`, `char *`
 
 Examples:
 
 ```
-uint32_t ip4 = 0x0100007f;                              // Print IPv4 address:
-xsnprintf(buf, sizeof(buf), "%m", fmt_ip4, &ip4);    // 127.0.0.1
+uint32_t ip4 = 0x0100007f;                           // Print IPv4 address:
+xsnprintf(buf, sizeof(buf), "%M", fmt_ip4, &ip4);    // 127.0.0.1
 
-uint8_t ip6[16] = {1, 100, 33};                         // Print IPv6 address:
-xsnprintf(buf, sizeof(buf), "%m", fmt_ip4, &ip6);    // [164:2100:0:0:0:0:0:0]
+uint8_t ip6[16] = {1, 100, 33};                      // Print IPv6 address:
+xsnprintf(buf, sizeof(buf), "%M", fmt_ip4, &ip6);    // [164:2100:0:0:0:0:0:0]
 
-uint8_t mac[6] = {1, 2, 3, 4, 5, 6};                    // Print MAC address:
-xsnprintf(buf, sizeof(buf), "%m", fmt_mac, &mac);    // 01:02:03:04:05:06
+uint8_t mac[6] = {1, 2, 3, 4, 5, 6};                 // Print MAC address:
+xsnprintf(buf, sizeof(buf), "%M", fmt_mac, &mac);    // 01:02:03:04:05:06
 
-const char str[] = {'a', \n, '"', 0};                   // Print escaped string:
-xsnprintf(buf, sizeof(buf), "%m", fmt_esc, str);     // a\n\"
+const char str[] = {'a', \n, '"', 0};                // Print escaped string:
+xsnprintf(buf, sizeof(buf), "%M", fmt_esc, 0, str);  // a\n\"
 
-const char *data = "xyz";                               // Print base64 data:
-xsnprintf(buf, sizeof(buf), "%m", fmt_b64, 3, data); // eHl6
+const char *data = "xyz";                            // Print base64 data:
+xsnprintf(buf, sizeof(buf), "%M", fmt_b64, 3, data); // eHl6
 ```
 
-### Custom `%M` format functions
+### Custom `%M`, `%m` format functions
 
 It is easy to create your own format functions to format data that is
 specific to your application. For example, if you want to print your
@@ -142,7 +142,7 @@ struct foo { int a; double b; const char *c; };
 size_t fmt_foo(void (*out)(char, void *), void *arg, va_list *ap) {
   struct foo *foo = va_arg(*ap, struct foo *);
   return xxprintf(out, arg, "{\"a\":%d, \"b\":%g, \"c\":%m}",
-                   foo->a, foo->b, fmt_esc, c);
+                   foo->a, foo->b, ESC(c));
 }
 ```
 
