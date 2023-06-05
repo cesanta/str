@@ -8,6 +8,7 @@ void setup() {
 }
 
 void loop() {
-  printf("hi! JSON: {%m:%g,[%d]}\n", ESC("value"), 1.234, 42);
+  printf("JSON: {%m:%g,[%d]}\n", ESC("value"), 1.234, 42);
+  printf("Base64: %M\n", fmt_b64, 5, "hello");
   delay(1000);
 }
