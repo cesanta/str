@@ -20,22 +20,9 @@ following routines:
 
 ## Usage example
 
-```c
-// Print into a buffer
-char buf[100];
-xsnprintf(buf, sizeof(buf), "%s: %g\n", "dbl", 1.234);  // dbl: 1.234
-xsnprintf(buf, sizeof(buf), "%.*s\n", 3, "foobar");     // foo
-xsnprintf(buf, sizeof(buf), "%#04x\n", 11);             // 0x0b
-xsnprintf(buf, sizeof(buf), "%d %5s\n", 7, "pad");      // 7   pad
+Printing to a buffer: https://github.com/cesanta/str/blob/873b39dd14b074bf0779f5d06f5c5bfe3bcb416b/test/main.c#L174-L179
 
-// Define printing function for printf()
-void xputchar(char ch, void *param) {
-  HAL_UART_Transmit(param, &ch, 1, 100);
-}
-
-// To enable printf, add "#define ENABLE_PRINTF" line before #include "str.h"
-printf("JSON: {%m: %g}\n", ESC("value"), 1.234);   // JSON: {"value": 1.234}
-```
+Print to the UART: https://github.com/cesanta/str/blob/873b39dd14b074bf0779f5d06f5c5bfe3bcb416b/test/main.ino#L11
 
 ## API reference
 
