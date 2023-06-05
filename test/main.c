@@ -181,7 +181,7 @@ static void test_m(void) {
 
 static void test_json(void) {
   char buf[100];
-  char *json = "{ \"a\": -42, \"b\": \"hi\", \"c\": true }";
+  const char *json = "{ \"a\": -42, \"b\": \"hi\", \"c\": true }";
   int b = 0;
   assert(json_get_long(json, (int) strlen(json), "$.a", 0) == -42);
   assert(json_get_str(json, (int) strlen(json), "$.b", buf, sizeof(buf)) == 2);
