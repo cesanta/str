@@ -152,7 +152,7 @@ static void test_float(void) {
 #endif
 }
 
-static void xputchar(char ch, void *arg) {
+static void out(char ch, void *arg) {
   putchar(ch);
   (void) arg;
 }
@@ -171,11 +171,12 @@ static void test_m(void) {
   assert(sf(quo, "_%m_%d", fmt_ip4, &ip4, 123));
   assert(sf(quo, "_%m_%d", ESC("127.0.0.1"), 123));
 
-  xprintf(xputchar, NULL, "%s: %g\n", "dbl", 1.234);
-  xprintf(xputchar, NULL, "%.*s\n", 3, "foobar");
-  xprintf(xputchar, NULL, "%#04x\n", 11);
-  xprintf(xputchar, NULL, "%d %5s\n", 7, "pad");
-  xprintf(xputchar, NULL, "JSON: {%m: %g}\n", ESC("value"), 1.234);
+  xprintf(out, NULL, "%s: %g\n", "dbl", 1.234);  // dbl: 1.234
+  xprintf(out, NULL, "%.*s\n", 3, "foobar");     // foo
+  xprintf(out, NULL, "%#04x\n", 11);             // 0x0b
+  xprintf(out, NULL, "%d %5s\n", 7, "pad");      // 7   pad
+  // JSON: {"value": 1.234}
+  xprintf(out, NULL, "JSON: {%m: %g}\n", ESC("value"), 1.234);
 }
 
 int main(void) {

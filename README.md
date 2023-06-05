@@ -13,6 +13,10 @@ following routines:
   hex, base64
 - `xdtoa()` - convert `double` to string
 - `xatod()` - convert string to `double`
+- `json_get()` - find element in a JSON string
+- `json_get_num()` - fetch numeric value from JSON string
+- `json_get_bool()` - fetch boolean value from JSON string
+- `json_get_str()` - fetch string value from JSON string
 
 ## Usage example
 
@@ -98,7 +102,144 @@ Print formatted string into a fixed-size buffer. Parameters:
 Return value: number of bytes printed. The result is guaranteed to be NUL
 terminated.
 
-### Pre-defined `%M`, `%m` format functions
+### json\_get()
+```c
+int json_get(const char *buf, int len, const char *path, int *size);
+```
+
+Parse JSON string `buf`, `len` and return the offset of the element
+specified by the JSON `path`. The length of the element is stored in `size`.
+
+Parameters:
+- `buf` - a pointer to a JSON string
+- `len` - a length of a JSON string
+- `path` - a JSON path. Must start with `$`, e.g. `$.user`, `$[12]`, `$`, etc
+- `size` - a pointer that receives element's length. Can be NULL
+
+Return value: offset of the element, or negative value on error.
+
+Usage example:
+
+```c
+// JSON string buf, len contains { "a": 1, "b": [2, 3] }
+int size, ofs;
+
+// Lookup "$", which is the whole JSON. Can be used for validation
+ofs = json_get(buf, len, "$", &size);  // ofs == 0, size == 23
+
+// Lookup attribute "a". Point to value "1"
+ofs = json_get(buf, len, "$.a", &zize);  // ofs = 7, size = 1
+
+// Lookup attribute "b". Point to array [2, 3]
+ofs = json_get(buf, len, "$.b", &size);  // ofs = 15, size = 6
+
+// Lookup attribute "b[1]". Point to value "3"
+ofs = json_get(buf, len, "$.b[1]", &size); // ofs = 19, size = 1
+```
+
+### json\_get\_num()
+
+```c
+int mg_json_get_num(const char *buf, int len, const char *path, double *val);
+```
+
+Fetch numeric (double) value from the json string `buf`, `len` at JSON path
+`path` into a placeholder `val`. Return true if successful.
+
+Parameters:
+- `buf` - a pointer to a JSON string
+- `len` - a length of a JSON string
+- `path` - a JSON path. Must start with `$`
+- `val` - a placeholder for value
+
+Return value: 1 on success, 0 on error
+
+Usage example:
+
+```c
+double d = 0.0;
+json_get_num("[1,2,3]", 7, "$[1]", &d));        // d == 2
+json_get_num("{\"a\":1.23}", 10, "$.a", &d));   // d == 1.23
+```
+
+### json\_get\_bool()
+
+```c
+int mg_json_get_bool(struct mg_str json, const char *path, int *v);
+```
+
+Fetch boolean (bool) value from the json string `json` at JSON path
+`path` into a placeholder `v`. Return true if successful.
+
+Parameters:
+- `buf` - a pointer to a JSON string
+- `len` - a length of a JSON string
+- `path` - a JSON path. Must start with `$`
+- `val` - a placeholder for value
+
+Return value: 1 on success, 0 on error
+
+Usage example:
+
+```c
+int b = 0;
+json_get_bool("[123]", 5, "$[0]", &b));   // Error. b == 0
+json_get_bool("[true]", 6, "$[0]", &b));  // b == 1
+```
+
+### json\_get\_long()
+
+```c
+long json_get_long(const char *buf, int len, const char *path, long default_val);
+```
+
+Fetch integer numeric (long) value from the json string `buf`, `len` at JSON path
+`path`. Return it if found, or `default_val` if not found.
+
+Parameters:
+- `buf` - a pointer to a JSON string
+- `len` - a length of a JSON string
+- `path` - a JSON path. Must start with `$`
+- `default_val` - a default value for the failure case
+
+Return value: found value, or `default_val` value
+
+Usage example:
+
+```c
+long a = json_get_long("[123]", 5, "$a", -1));   // a == -1
+long b = json_get_long("[123]", 5, "$[0]", -1)); // b == 123
+```
+
+### json\_get\_str()
+
+```c
+int json_get_str(const char *buf, int len, const char *path, char *dst, size_t dstlen);
+```
+
+Fetch string value from the json string `json` at JSON path
+`path`. If found, a string is allocated using `calloc()`,
+un-escaped, and returned to the caller. It is the caller's responsibility to
+`free()` the returned string.
+
+Parameters:
+- `buf` - a pointer to a JSON string
+- `len` - a length of a JSON string
+- `path` - a JSON path. Must start with `$`
+- `dst` - a pointer to a buffer that holds the result
+- `dstlen` - a length of a result buffer
+
+Return value: length of a decoded string. >= 0 on success, < 0 on error
+
+Usage example:
+
+```c
+char dst[100];
+json_get_str("[1,2,\"hi\"]", "$[2]", dst, sizeof(dst));  // dst contains "hi"
+```
+
+
+## Pre-defined `%M`, `%m` format functions
 
 ```c
 size_t fmt_*(void (*out)(char, void *), void *arg, va_list *ap);
@@ -130,7 +271,7 @@ const char *data = "xyz";                            // Print base64 data:
 xsnprintf(buf, sizeof(buf), "%M", fmt_b64, 3, data); // eHl6
 ```
 
-### Custom `%M`, `%m` format functions
+## Custom `%M`, `%m` format functions
 
 It is easy to create your own format functions to format data that is
 specific to your application. For example, if you want to print your
