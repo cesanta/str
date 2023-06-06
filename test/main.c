@@ -181,13 +181,16 @@ static void test_m(void) {
 
 static void test_json(void) {
   char buf[100];
-  const char *json = "{ \"a\": -42, \"b\": \"hi\", \"c\": true }";
-  int b = 0;
-  assert(json_get_long(json, (int) strlen(json), "$.a", 0) == -42);
-  assert(json_get_str(json, (int) strlen(json), "$.b", buf, sizeof(buf)) == 2);
-  assert(strcmp(buf, "hi") == 0);
-  assert(json_get_bool(json, (int) strlen(json), "$.c", &b) == 1);
+  const char *json = "{ \"a\": -42, \"b\": [ \"hi\\t\\u0020\",  true, { } ] }";
+  int ofs, n, b = 0, len = (int) strlen(json);
+  assert(json_get_long(json, len, "$.a", 0) == -42);
+  assert(json_get_str(json, len, "$.b[0]", buf, sizeof(buf)) == 4);
+  assert(strcmp(buf, "hi\t ") == 0);
+  assert(json_get_bool(json, len, "$.b[1]", &b) == 1);
   assert(b == 1);
+  assert(json_get(json, len, "$.c", &n) < 0);
+  assert((ofs = json_get(json, len, "$.b[2]", &n)) > 0 && n == 3 &&
+         json[ofs] == '{' && json[ofs + 2] == '}');
 }
 
 int main(void) {
