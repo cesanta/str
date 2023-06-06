@@ -14,9 +14,20 @@ following routines:
 - `xdtoa()` - convert `double` to string
 - `xatod()` - convert string to `double`
 - `json_get()` - find element in a JSON string
-- `json_get_num()` - fetch numeric value from JSON string
-- `json_get_bool()` - fetch boolean value from JSON string
-- `json_get_str()` - fetch string value from JSON string
+- `json_get_num()` - fetch numeric value from a JSON string
+- `json_get_bool()` - fetch boolean value from a JSON string
+- `json_get_str()` - fetch string value from a JSON string
+
+## Features
+
+- Ideal for implementing serial protocols, debug logging, JSON data exchange
+- Source code is both ISO C and ISO C++ compliant
+- Tiny size: see the [Footprint](#footprint) section below for exact numbers
+- `*printf()` supports all major format specifiers, width, precition and alignment
+- `*printf()` supports floating point `%f` and `%g` specifiers by default
+- `*printf()` Supports non-standard `%M`,`%m` specifiers which allows for custom formats
+- Can print to anything: to a memory buffer, file, socket, UART, etc
+- Extensively [tested](/cesanta/str/actions) using VC98, VC22, ARM GCC, AVR GCC, x86 GCC, Clang
 
 ## Usage example
 
