@@ -463,7 +463,7 @@ XAPI int json_get(const char *s, int len, const char *path, int *toklen) {
   if (toklen) *toklen = 0;
   if (path[0] != '$') return -1;
 
-#define MG_CHECKRET(x)                                  \
+#define MG_CHECKRET()                                   \
   do {                                                  \
     if (depth == ed && path[pos] == '\0' && ci == ei) { \
       if (toklen) *toklen = i - j + 1;                  \
@@ -473,12 +473,12 @@ XAPI int json_get(const char *s, int len, const char *path, int *toklen) {
 
 // In the ascii table, the distance between `[` and `]` is 2.
 // Ditto for `{` and `}`. Hence +2 in the code below.
-#define MG_EOO(x)                               \
+#define MG_EOO()                                \
   do {                                          \
     if (depth == ed && ci != ei) return -2;     \
     if (c != nesting[depth - 1] + 2) return -1; \
     depth--;                                    \
-    MG_CHECKRET(x);                             \
+    MG_CHECKRET();                              \
   } while (0)
 
   for (i = 0; i < len; i++) {
@@ -510,7 +510,7 @@ XAPI int json_get(const char *s, int len, const char *path, int *toklen) {
           nesting[depth++] = c;
           break;
         } else if (c == ']' && depth > 0) {  // Empty array
-          MG_EOO(']');
+          MG_EOO();
         } else if (c == 't' && i + 3 < len && memcmp(&s[i], "true", 4) == 0) {
           i += 3;
         } else if (c == 'n' && i + 3 < len && memcmp(&s[i], "null", 4) == 0) {
@@ -528,7 +528,7 @@ XAPI int json_get(const char *s, int len, const char *path, int *toklen) {
         } else {
           return -1;
         }
-        MG_CHECKRET('V');
+        MG_CHECKRET();
         if (depth == ed && ei >= 0) ci++;
         expecting = S_COMMA_OR_EOO;
         break;
@@ -554,8 +554,9 @@ XAPI int json_get(const char *s, int len, const char *path, int *toklen) {
           i += n + 1;
           expecting = S_COLON;
         } else if (c == '}') {  // Empty object
-          MG_EOO('}');
+          MG_EOO();
           expecting = S_COMMA_OR_EOO;
+          if (depth == ed && ei >= 0) ci++;
         } else {
           return -1;
         }
@@ -575,7 +576,7 @@ XAPI int json_get(const char *s, int len, const char *path, int *toklen) {
         } else if (c == ',') {
           expecting = (nesting[depth - 1] == '{') ? S_KEY : S_VALUE;
         } else if (c == ']' || c == '}') {
-          MG_EOO('O');
+          MG_EOO();
           if (depth == ed && ei >= 0) ci++;
         } else {
           return -1;

@@ -181,16 +181,19 @@ static void test_m(void) {
 
 static void test_json(void) {
   char buf[100];
-  const char *json = "{ \"a\": -42, \"b\": [ \"hi\\t\\u0020\",  true, { } ] }";
-  int ofs, n, b = 0, len = (int) strlen(json);
-  assert(json_get_long(json, len, "$.a", 0) == -42);
-  assert(json_get_str(json, len, "$.b[0]", buf, sizeof(buf)) == 4);
+  const char *s = "{\"a\": -42, \"b\": [\"hi\\t\\u0020\", true, { }, -1.7e-2]}";
+  int ofs, n, b = 0, len = (int) strlen(s);
+  double d = 0.0;
+  assert(json_get_long(s, len, "$.a", 0) == -42);
+  assert(json_get_str(s, len, "$.b[0]", buf, sizeof(buf)) == 4);
   assert(strcmp(buf, "hi\t ") == 0);
-  assert(json_get_bool(json, len, "$.b[1]", &b) == 1);
-  assert(b == 1);
-  assert(json_get(json, len, "$.c", &n) < 0);
-  assert((ofs = json_get(json, len, "$.b[2]", &n)) > 0 && n == 3 &&
-         json[ofs] == '{' && json[ofs + 2] == '}');
+  assert(json_get_str(s, len, "$.b[0]", buf, 4) < 0);
+  assert(json_get_bool(s, len, "$.b[1]", &b) == 1 && b == 1);
+  assert(json_get(s, len, "$.c", &n) < 0);
+  assert(json_get(s, len, "$.b[4]", &n) < 0);
+  assert((ofs = json_get(s, len, "$.b[2]", &n)) > 0);
+  assert(n == 3 && s[ofs] == '{' && s[ofs + 2] == '}');
+  assert(json_get_num(s, len, "$.b[3]", &d) == 1 && d == -0.017);
 }
 
 int main(void) {
