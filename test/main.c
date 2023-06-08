@@ -150,6 +150,13 @@ static void test_float(void) {
   TEST_FLOAT("%g", HUGE_VAL, "inf");
   TEST_FLOAT("%g", -HUGE_VAL, "-inf");
 #endif
+
+  {
+    char buf[20];
+    double d;
+    json_get_num("1.23", 4, "$", &d);      // Parse floating point number
+    xsnprintf(buf, sizeof(buf), "%g", d);  // 1.23 (print parsed number)
+  }
 }
 
 static void out(char ch, void *arg) {
