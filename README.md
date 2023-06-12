@@ -31,7 +31,7 @@ following routines:
 
 Printing to a buffer: https://github.com/cesanta/str/blob/873b39dd14b074bf0779f5d06f5c5bfe3bcb416b/test/main.c#L174-L177
 
-Print to the UART. Output JSON, and base64-encoded data: https://github.com/cesanta/str/blob/7e05d658a0f89b2bda67dda8cc1a912d0e2b7cba/test/main.ino#L11-L12
+Print to the UART. Output JSON, and base64-encoded data: https://github.com/cesanta/str/blob/42f0571f8de45e1acd63ffb93526333bd15630c5/test/main.ino#L1-L14
 
 Parse JSON: https://github.com/cesanta/str/blob/813e08acf4e389690830bfb5ff525c9e79bdb362/test/main.c#L183-L190
 
