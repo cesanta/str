@@ -1,7 +1,7 @@
 #include "str.h"
 
 void xputchar(char ch, void *arg) { Serial.write(ch); }
-#define printf(fmt, ...) xprintf(xputchar, NULL, fmt, __VA_ARGS__)
+#define printf(...) xprintf(xputchar, NULL, __VA_ARGS__)
 
 void setup() {
   Serial.begin(115200);
