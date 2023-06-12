@@ -1,7 +1,8 @@
 // Copyright (c) 2023 Cesanta Software Limited
 // SPDX-License-Identifier: AGPL-3.0 or commercial
 
-#pragma once
+#ifndef STR_H_
+#define STR_H_
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -26,66 +27,54 @@ typedef int int32_t;
 extern "C" {
 #endif
 
-#define XAPI static inline
 #define ESC(str) fmt_esc, 0, (str)
 
 // Low level basic functions
-XAPI size_t xvprintf(void (*)(char, void *), void *, const char *, va_list *);
-XAPI size_t xprintf(void (*)(char, void *), void *, const char *, ...);
+size_t xvprintf(void (*)(char, void *), void *, const char *, va_list *);
+size_t xprintf(void (*)(char, void *), void *, const char *, ...);
 
 // Convenience wrappers around xprintf
-XAPI size_t xvsnprintf(char *buf, size_t len, const char *fmt, va_list *ap);
-XAPI size_t xsnprintf(char *, size_t, const char *fmt, ...);
+size_t xvsnprintf(char *buf, size_t len, const char *fmt, va_list *ap);
+size_t xsnprintf(char *, size_t, const char *fmt, ...);
 
 // Pre-defined %M/%m formatting functions
-XAPI size_t fmt_ip4(void (*out)(char, void *), void *arg, va_list *ap);
-XAPI size_t fmt_ip6(void (*out)(char, void *), void *arg, va_list *ap);
-XAPI size_t fmt_mac(void (*out)(char, void *), void *arg, va_list *ap);
-XAPI size_t fmt_b64(void (*out)(char, void *), void *arg, va_list *ap);
-XAPI size_t fmt_esc(void (*out)(char, void *), void *arg, va_list *ap);
+size_t fmt_ip4(void (*out)(char, void *), void *arg, va_list *ap);
+size_t fmt_ip6(void (*out)(char, void *), void *arg, va_list *ap);
+size_t fmt_mac(void (*out)(char, void *), void *arg, va_list *ap);
+size_t fmt_b64(void (*out)(char, void *), void *arg, va_list *ap);
+size_t fmt_esc(void (*out)(char, void *), void *arg, va_list *ap);
 
 // JSON parsing API
-XAPI int json_get(const char *buf, int len, const char *path, int *size);
-XAPI int json_get_num(const char *buf, int len, const char *path, double *val);
-XAPI int json_get_bool(const char *buf, int len, const char *path, int *val);
-XAPI int json_get_str(const char *buf, int len, const char *path, char *dst,
-                      size_t dlen);
-XAPI long json_get_long(const char *buf, int len, const char *path, long dflt);
+int json_get(const char *buf, int len, const char *path, int *size);
+int json_get_num(const char *buf, int len, const char *path, double *val);
+int json_get_bool(const char *buf, int len, const char *path, int *val);
+int json_get_str(const char *buf, int len, const char *path, char *dst,
+                 size_t dlen);
+long json_get_long(const char *buf, int len, const char *path, long dflt);
 
 #if !defined(STR_API_ONLY)
 typedef void (*xout_t)(char, void *);                 // Output function
 typedef size_t (*xfmt_t)(xout_t, void *, va_list *);  // %M format function
-
-#if defined(ENABLE_PRINTF)
-extern void xputchar(char, void *);
-int printf(const char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  size_t len = xvprintf(xputchar, NULL, fmt, &ap);
-  va_end(ap);
-  return (int) len;
-}
-#endif
 
 struct xbuf {
   char *buf;
   size_t size, len;
 };
 
-XAPI void xout_buf(char ch, void *param) {
+static void xout_buf(char ch, void *param) {
   struct xbuf *mb = (struct xbuf *) param;
   if (mb->len < mb->size) mb->buf[mb->len] = ch;
   mb->len++;
 }
 
-XAPI size_t xvsnprintf(char *buf, size_t len, const char *fmt, va_list *ap) {
+size_t xvsnprintf(char *buf, size_t len, const char *fmt, va_list *ap) {
   struct xbuf mb = {buf, len, 0};
   size_t n = xvprintf(xout_buf, &mb, fmt, ap);
   if (len > 0) buf[n < len ? n : len - 1] = '\0';  // NUL terminate
   return n;
 }
 
-XAPI size_t xsnprintf(char *buf, size_t len, const char *fmt, ...) {
+size_t xsnprintf(char *buf, size_t len, const char *fmt, ...) {
   va_list ap;
   size_t n;
   va_start(ap, fmt);
@@ -94,34 +83,34 @@ XAPI size_t xsnprintf(char *buf, size_t len, const char *fmt, ...) {
   return n;
 }
 
-XAPI size_t fmt_ip4(void (*out)(char, void *), void *arg, va_list *ap) {
+size_t fmt_ip4(void (*out)(char, void *), void *arg, va_list *ap) {
   uint8_t *p = va_arg(*ap, uint8_t *);
   return xprintf(out, arg, "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
 }
 
 #define U16(p) ((((uint16_t) (p)[0]) << 8) | (p)[1])
-XAPI size_t fmt_ip6(void (*out)(char, void *), void *arg, va_list *ap) {
+size_t fmt_ip6(void (*out)(char, void *), void *arg, va_list *ap) {
   uint8_t *p = va_arg(*ap, uint8_t *);
   return xprintf(out, arg, "[%x:%x:%x:%x:%x:%x:%x:%x]", U16(&p[0]), U16(&p[2]),
                  U16(&p[4]), U16(&p[6]), U16(&p[8]), U16(&p[10]), U16(&p[12]),
                  U16(&p[14]));
 }
 
-XAPI size_t fmt_mac(void (*out)(char, void *), void *arg, va_list *ap) {
+size_t fmt_mac(void (*out)(char, void *), void *arg, va_list *ap) {
   uint8_t *p = va_arg(*ap, uint8_t *);
   return xprintf(out, arg, "%02x:%02x:%02x:%02x:%02x:%02x", p[0], p[1], p[2],
                  p[3], p[4], p[5]);
 }
 
-XAPI int xisdigit(int c) { return c >= '0' && c <= '9'; }
+static int xisdigit(int c) { return c >= '0' && c <= '9'; }
 
-XAPI size_t xstrlen(const char *s) {
+static size_t xstrlen(const char *s) {
   size_t n = 0;
   while (s[n] != '\0') n++;
   return n;
 }
 
-XAPI int addexp(char *buf, int e, int sign) {
+static int addexp(char *buf, int e, int sign) {
   int n = 0;
   buf[n++] = 'e';
   buf[n++] = (char) sign;
@@ -133,7 +122,7 @@ XAPI int addexp(char *buf, int e, int sign) {
   return n;
 }
 
-XAPI int xisinf(double x) {
+static int xisinf(double x) {
   union {
     double f;
     uint64_t u;
@@ -142,7 +131,7 @@ XAPI int xisinf(double x) {
          ((unsigned) ieee754.u == 0);
 }
 
-XAPI int xisnan(double x) {
+static int xisnan(double x) {
   union {
     double f;
     uint64_t u;
@@ -211,7 +200,7 @@ static size_t xdtoa(char *dst, size_t dstlen, double d, int width, int tz) {
   return xsnprintf(dst, dstlen, "%s", buf);
 }
 
-XAPI double xatod(const char *p, int len, int *numlen) {
+static double xatod(const char *p, int len, int *numlen) {
   double d = 0.0;
   int i = 0, sign = 1;
 
@@ -257,7 +246,7 @@ XAPI double xatod(const char *p, int len, int *numlen) {
   return d;
 }
 
-XAPI size_t xlld(char *buf, int64_t val, int is_signed, int is_hex) {
+static size_t xlld(char *buf, int64_t val, int is_signed, int is_hex) {
   const char *letters = "0123456789abcdef";
   uint64_t v = (uint64_t) val;
   size_t s = 0, n, i;
@@ -279,13 +268,13 @@ XAPI size_t xlld(char *buf, int64_t val, int is_signed, int is_hex) {
   return n + s;
 }
 
-XAPI size_t scpy(void (*o)(char, void *), void *ptr, char *buf, size_t len) {
+static size_t scpy(void (*o)(char, void *), void *ptr, char *buf, size_t len) {
   size_t i = 0;
   while (i < len && buf[i] != '\0') o(buf[i++], ptr);
   return i;
 }
 
-XAPI char xesc(int c, int esc) {
+static char xesc(int c, int esc) {
   const char *p, *esc1 = "\b\f\n\r\t\\\"", *esc2 = "bfnrt\\\"";
   for (p = esc ? esc1 : esc2; *p != '\0'; p++) {
     if (*p == c) return esc ? esc2[p - esc1] : esc1[p - esc2];
@@ -293,7 +282,7 @@ XAPI char xesc(int c, int esc) {
   return 0;
 }
 
-XAPI size_t fmt_esc(void (*out)(char, void *), void *param, va_list *ap) {
+size_t fmt_esc(void (*out)(char, void *), void *param, va_list *ap) {
   unsigned len = va_arg(*ap, unsigned);
   const char *s = va_arg(*ap, const char *);
   size_t i, n = 0;
@@ -310,7 +299,7 @@ XAPI size_t fmt_esc(void (*out)(char, void *), void *param, va_list *ap) {
   return n;
 }
 
-XAPI size_t fmt_b64(void (*out)(char, void *), void *param, va_list *ap) {
+size_t fmt_b64(void (*out)(char, void *), void *param, va_list *ap) {
   unsigned len = va_arg(*ap, unsigned);
   uint8_t *buf = va_arg(*ap, uint8_t *);
   size_t i, n = 0;
@@ -327,8 +316,7 @@ XAPI size_t fmt_b64(void (*out)(char, void *), void *param, va_list *ap) {
   return n;
 }
 
-XAPI size_t xprintf(void (*out)(char, void *), void *ptr, const char *fmt,
-                    ...) {
+size_t xprintf(void (*out)(char, void *), void *ptr, const char *fmt, ...) {
   size_t len = 0;
   va_list ap;
   va_start(ap, fmt);
@@ -337,7 +325,7 @@ XAPI size_t xprintf(void (*out)(char, void *), void *ptr, const char *fmt,
   return len;
 }
 
-XAPI size_t xvprintf(xout_t out, void *param, const char *fmt, va_list *ap) {
+size_t xvprintf(xout_t out, void *param, const char *fmt, va_list *ap) {
   size_t i = 0, n = 0;
   while (fmt[i] != '\0') {
     if (fmt[i] == '%') {
@@ -427,7 +415,7 @@ XAPI size_t xvprintf(xout_t out, void *param, const char *fmt, va_list *ap) {
   return n;
 }
 
-XAPI char json_esc(int c, int esc) {
+static char json_esc(int c, int esc) {
   const char *p, *e[] = {"\b\f\n\r\t\\\"", "bfnrt\\\""};
   const char *esc1 = esc ? e[0] : e[1], *esc2 = esc ? e[1] : e[0];
   for (p = esc1; *p != '\0'; p++) {
@@ -436,7 +424,7 @@ XAPI char json_esc(int c, int esc) {
   return 0;
 }
 
-XAPI int json_pass_string(const char *s, int len) {
+static int json_pass_string(const char *s, int len) {
   int i;
   for (i = 0; i < len; i++) {
     if (s[i] == '\\' && i + 1 < len && json_esc(s[i + 1], 1)) {
@@ -450,7 +438,7 @@ XAPI int json_pass_string(const char *s, int len) {
   return -1;
 }
 
-XAPI int json_get(const char *s, int len, const char *path, int *toklen) {
+int json_get(const char *s, int len, const char *path, int *toklen) {
   enum { S_VALUE, S_KEY, S_COLON, S_COMMA_OR_EOO } expecting = S_VALUE;
   unsigned char nesting[20];
   int i = 0;             // Current offset in `s`
@@ -587,19 +575,19 @@ XAPI int json_get(const char *s, int len, const char *path, int *toklen) {
   return -2;
 }
 
-XAPI unsigned char xnimble(unsigned char c) {
+static unsigned char xnimble(unsigned char c) {
   return (c >= '0' && c <= '9')   ? (unsigned char) (c - '0')
          : (c >= 'A' && c <= 'F') ? (unsigned char) (c - '7')
                                   : (unsigned char) (c - 'W');
 }
 
-XAPI unsigned long xunhexn(const char *s, size_t len) {
+static unsigned long xunhexn(const char *s, size_t len) {
   unsigned long i = 0, v = 0;
   for (i = 0; i < len; i++) v <<= 4, v |= xnimble(((uint8_t *) s)[i]);
   return v;
 }
 
-XAPI int json_unescape(const char *buf, size_t len, char *to, size_t n) {
+static int json_unescape(const char *buf, size_t len, char *to, size_t n) {
   size_t i, j;
   for (i = 0, j = 0; i < len && j < n; i++, j++) {
     if (buf[i] == '\\' && i + 5 < len && buf[i + 1] == 'u') {
@@ -623,7 +611,7 @@ XAPI int json_unescape(const char *buf, size_t len, char *to, size_t n) {
   return (int) j;
 }
 
-XAPI int json_get_num(const char *buf, int len, const char *path, double *v) {
+int json_get_num(const char *buf, int len, const char *path, double *v) {
   int found = 0, n = 0, off = json_get(buf, len, path, &n);
   if (off >= 0 && (buf[off] == '-' || (buf[off] >= '0' && buf[off] <= '9'))) {
     if (v != NULL) *v = xatod(buf + off, n, NULL);
@@ -632,7 +620,7 @@ XAPI int json_get_num(const char *buf, int len, const char *path, double *v) {
   return found;
 }
 
-XAPI int json_get_bool(const char *buf, int len, const char *path, int *v) {
+int json_get_bool(const char *buf, int len, const char *path, int *v) {
   int found = 0, off = json_get(buf, len, path, NULL);
   if (off >= 0 && (buf[off] == 't' || buf[off] == 'f')) {
     if (v != NULL) *v = buf[off] == 't';
@@ -641,8 +629,8 @@ XAPI int json_get_bool(const char *buf, int len, const char *path, int *v) {
   return found;
 }
 
-XAPI int json_get_str(const char *buf, int len, const char *path, char *dst,
-                      size_t dlen) {
+int json_get_str(const char *buf, int len, const char *path, char *dst,
+                 size_t dlen) {
   int result = -1, n = 0, off = json_get(buf, len, path, &n);
   if (off >= 0 && n > 1 && buf[off] == '"') {
     result = json_unescape(buf + off + 1, (size_t) (n - 2), dst, dlen);
@@ -650,7 +638,7 @@ XAPI int json_get_str(const char *buf, int len, const char *path, char *dst,
   return result;
 }
 
-XAPI long json_get_long(const char *buf, int len, const char *path, long dflt) {
+long json_get_long(const char *buf, int len, const char *path, long dflt) {
   double v;
   if (json_get_num(buf, len, path, &v)) dflt = (long) v;
   return dflt;
@@ -661,3 +649,4 @@ XAPI long json_get_long(const char *buf, int len, const char *path, long dflt) {
 #ifdef __cplusplus
 }
 #endif
+#endif  // STR_H_

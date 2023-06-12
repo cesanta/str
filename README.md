@@ -11,8 +11,6 @@ following routines:
   standard specifiers (including floating point `%f` and `%g`) as well as
   non-standard `%m` and `%M` specifiers that allow custom formatting like JSON,
   hex, base64
-- `xdtoa()` - convert `double` to string
-- `xatod()` - convert string to `double`
 - `json_get()` - find element in a JSON string
 - `json_get_num()` - fetch numeric value from a JSON string
 - `json_get_bool()` - fetch boolean value from a JSON string
@@ -33,11 +31,46 @@ following routines:
 
 Printing to a buffer: https://github.com/cesanta/str/blob/873b39dd14b074bf0779f5d06f5c5bfe3bcb416b/test/main.c#L174-L177
 
-Print to the UART. Output JSON, with base64-encoded data: https://github.com/cesanta/str/blob/7e05d658a0f89b2bda67dda8cc1a912d0e2b7cba/test/main.ino#L11-L12
+Print to the UART. Output JSON, and base64-encoded data: https://github.com/cesanta/str/blob/7e05d658a0f89b2bda67dda8cc1a912d0e2b7cba/test/main.ino#L11-L12
 
 Parse JSON: https://github.com/cesanta/str/blob/813e08acf4e389690830bfb5ff525c9e79bdb362/test/main.c#L183-L190
 
 Parse and print floating point: https://github.com/cesanta/str/blob/23ebc5c6aafe1b9b5141f97563ee57c50c72093b/test/main.c#L155-L158
+
+## Code duplication
+
+`str.h` is divided in two parts: API declaration, and implementation.
+The implementation part is wrapped into the preprocessor conditional:
+
+```c
+// API declarations
+size_t xprintf(void (*)(char, void *), void *, const char *, ...);
+...
+
+#ifndef STR_API_ONLY
+// Implementation
+......
+#endif
+```
+
+If more than one file includes `str.h`, then the build will result in
+duplicate symbols, because the implementation will end up duplicated in
+several object files.
+To avoid this, only one file should include the full
+`str.h`, and the rest of the files should only include API declarations:
+
+file1.c:
+```c
+#include "str.h"
+...
+```
+
+file2.c, file3.c, ...:
+```c
+#define STR_API_ONLY
+#include "str.h"
+...
+```
 
 ## API reference
 
