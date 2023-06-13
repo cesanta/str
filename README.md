@@ -15,6 +15,7 @@ following routines:
 - `json_get_num()` - fetch numeric value from a JSON string
 - `json_get_bool()` - fetch boolean value from a JSON string
 - `json_get_str()` - fetch string value from a JSON string
+- `xhexdump()` - print hex dump of the given memory buffer
 
 ## Features
 
@@ -76,16 +77,16 @@ file2.c, file3.c, ...:
 
 ### xprintf(), vxprintf()
 ```c
-size_t vxprintf(void (*out)(char, void *), void *arg, const char *fmt, va_list *);
-size_t xprintf(void (*out)(char, void *), void *arg, const char *fmt, ...);
+size_t vxprintf(void (*fn)(char, void *), void *arg, const char *fmt, va_list *);
+size_t xprintf(void (*fn)(char, void *), void *arg, const char *fmt, ...);
 ```
 
 Print formatted string using an output function `fn()`. The output function
 outputs a single byte: `void fn(char ch, void *param) { ... }`. By using
 different output functions, it is possible to print data to anywhere.
 Parameters:
-- `out` - an output function
-- `arg` - an parameter for the `out()` output function
+- `fn` - an output function
+- `arg` - an parameter for the `fn()` output function
 - `fmt` - printf-like format string which supports the following specifiers:
   - `%hhd`, `%hd`, `%d`, `%ld`, `%lld` - for `char`, `short`, `int`, `long`, `int64_t`
   - `%hhu`, `%hu`, `%u`, `%lu`, `%llu` - same but for unsigned variants
@@ -107,11 +108,11 @@ positional arguments. That format function should return the number of bytes
 it has printed. Here its signature:
 
 ```c
-size_t (*ff)(void (*out)(char, void *), void *arg, va_list *ap);
+size_t (*ff)(void (*fn)(char, void *), void *arg, va_list *ap);
 ```
 Parameters:
-- `out` - an output function
-- `arg` - an parameter for the `out()` output function
+- `fn` - an output function
+- `arg` - an parameter for the `fn()` output function
 - `ap` - a pointer for fetching positional arguments
 
 This library ships with several pre-defined format functions described below.
@@ -273,11 +274,31 @@ char dst[100];
 json_get_str("[1,2,\"hi\"]", "$[2]", dst, sizeof(dst));  // dst contains "hi"
 ```
 
+### xhexdump()
+
+```c
+void xhexdump(void (*fn)(char, void *), void *arg, const void *buf, size_t len);
+```
+
+Print hex dump of the given memory buffer.
+
+Parameters:
+- `fn` - an output function
+- `arg` - an parameter for the `fn()` output function
+- `buf` - a pointer to a buffer to print
+- `len` - a length of a buffer
+
+Usage example:
+
+```c
+xhexdump(xputchar, NULL, "hi", 2);
+```
+
 
 ## Pre-defined `%M`, `%m` format functions
 
 ```c
-size_t fmt_*(void (*out)(char, void *), void *arg, va_list *ap);
+size_t fmt_*(void (*fn)(char, void *), void *arg, va_list *ap);
 ```
 
 Pre-defined helper functions for `%M` specifier:
@@ -315,10 +336,10 @@ data structure as JSON string, just create your custom formatting function:
 ```c
 struct foo { int a; double b; const char *c; };
 
-size_t fmt_foo(void (*out)(char, void *), void *arg, va_list *ap) {
+size_t fmt_foo(void (*fn)(char, void *), void *arg, va_list *ap) {
   struct foo *foo = va_arg(*ap, struct foo *);
-  return xxprintf(out, arg, "{\"a\":%d, \"b\":%g, \"c\":%m}",
-                   foo->a, foo->b, ESC(c));
+  return xxprintf(fn, arg, "{\"a\":%d, \"b\":%g, \"c\":%m}",
+                  foo->a, foo->b, ESC(c));
 }
 ```
 

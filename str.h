@@ -38,11 +38,14 @@ size_t xvsnprintf(char *buf, size_t len, const char *fmt, va_list *ap);
 size_t xsnprintf(char *, size_t, const char *fmt, ...);
 
 // Pre-defined %M/%m formatting functions
-size_t fmt_ip4(void (*out)(char, void *), void *arg, va_list *ap);
-size_t fmt_ip6(void (*out)(char, void *), void *arg, va_list *ap);
-size_t fmt_mac(void (*out)(char, void *), void *arg, va_list *ap);
-size_t fmt_b64(void (*out)(char, void *), void *arg, va_list *ap);
-size_t fmt_esc(void (*out)(char, void *), void *arg, va_list *ap);
+size_t fmt_ip4(void (*fn)(char, void *), void *arg, va_list *ap);
+size_t fmt_ip6(void (*fn)(char, void *), void *arg, va_list *ap);
+size_t fmt_mac(void (*fn)(char, void *), void *arg, va_list *ap);
+size_t fmt_b64(void (*fn)(char, void *), void *arg, va_list *ap);
+size_t fmt_esc(void (*fn)(char, void *), void *arg, va_list *ap);
+
+// Utility functions
+void xhexdump(void (*fn)(char, void *), void *arg, const void *buf, size_t len);
 
 // JSON parsing API
 int json_get(const char *buf, int len, const char *path, int *size);
@@ -83,26 +86,28 @@ size_t xsnprintf(char *buf, size_t len, const char *fmt, ...) {
   return n;
 }
 
-size_t fmt_ip4(void (*out)(char, void *), void *arg, va_list *ap) {
+size_t fmt_ip4(void (*fn)(char, void *), void *arg, va_list *ap) {
   uint8_t *p = va_arg(*ap, uint8_t *);
-  return xprintf(out, arg, "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
+  return xprintf(fn, arg, "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
 }
 
 #define U16(p) ((((uint16_t) (p)[0]) << 8) | (p)[1])
-size_t fmt_ip6(void (*out)(char, void *), void *arg, va_list *ap) {
+size_t fmt_ip6(void (*fn)(char, void *), void *arg, va_list *ap) {
   uint8_t *p = va_arg(*ap, uint8_t *);
-  return xprintf(out, arg, "[%x:%x:%x:%x:%x:%x:%x:%x]", U16(&p[0]), U16(&p[2]),
+  return xprintf(fn, arg, "[%x:%x:%x:%x:%x:%x:%x:%x]", U16(&p[0]), U16(&p[2]),
                  U16(&p[4]), U16(&p[6]), U16(&p[8]), U16(&p[10]), U16(&p[12]),
                  U16(&p[14]));
 }
 
-size_t fmt_mac(void (*out)(char, void *), void *arg, va_list *ap) {
+size_t fmt_mac(void (*fn)(char, void *), void *arg, va_list *ap) {
   uint8_t *p = va_arg(*ap, uint8_t *);
-  return xprintf(out, arg, "%02x:%02x:%02x:%02x:%02x:%02x", p[0], p[1], p[2],
+  return xprintf(fn, arg, "%02x:%02x:%02x:%02x:%02x:%02x", p[0], p[1], p[2],
                  p[3], p[4], p[5]);
 }
 
-static int xisdigit(int c) { return c >= '0' && c <= '9'; }
+static int xisdigit(int c) {
+  return c >= '0' && c <= '9';
+}
 
 static size_t xstrlen(const char *s) {
   size_t n = 0;
@@ -282,7 +287,7 @@ static char xesc(int c, int esc) {
   return 0;
 }
 
-size_t fmt_esc(void (*out)(char, void *), void *param, va_list *ap) {
+size_t fmt_esc(void (*fn)(char, void *), void *param, va_list *ap) {
   unsigned len = va_arg(*ap, unsigned);
   const char *s = va_arg(*ap, const char *);
   size_t i, n = 0;
@@ -290,16 +295,16 @@ size_t fmt_esc(void (*out)(char, void *), void *param, va_list *ap) {
   for (i = 0; i < len && s[i] != '\0'; i++) {
     char c = xesc(s[i], 1);
     if (c) {
-      out('\\', param), out(c, param), n += 2;
+      fn('\\', param), fn(c, param), n += 2;
     } else {
-      out(s[i], param);
+      fn(s[i], param);
       n++;
     }
   }
   return n;
 }
 
-size_t fmt_b64(void (*out)(char, void *), void *param, va_list *ap) {
+size_t fmt_b64(void (*fn)(char, void *), void *param, va_list *ap) {
   unsigned len = va_arg(*ap, unsigned);
   uint8_t *buf = va_arg(*ap, uint8_t *);
   size_t i, n = 0;
@@ -311,21 +316,21 @@ size_t fmt_b64(void (*out)(char, void *), void *param, va_list *ap) {
     char tmp[4] = {t[c1 >> 2], t[(c1 & 3) << 4 | (c2 >> 4)], '=', '='};
     if (i + 1 < len) tmp[2] = t[(c2 & 15) << 2 | (c3 >> 6)];
     if (i + 2 < len) tmp[3] = t[c3 & 63];
-    n += scpy(out, param, tmp, sizeof(tmp));
+    n += scpy(fn, param, tmp, sizeof(tmp));
   }
   return n;
 }
 
-size_t xprintf(void (*out)(char, void *), void *ptr, const char *fmt, ...) {
+size_t xprintf(void (*fn)(char, void *), void *ptr, const char *fmt, ...) {
   size_t len = 0;
   va_list ap;
   va_start(ap, fmt);
-  len = xvprintf(out, ptr, fmt, &ap);
+  len = xvprintf(fn, ptr, fmt, &ap);
   va_end(ap);
   return len;
 }
 
-size_t xvprintf(xout_t out, void *param, const char *fmt, va_list *ap) {
+size_t xvprintf(xout_t fn, void *param, const char *fmt, va_list *ap) {
   size_t i = 0, n = 0;
   while (fmt[i] != '\0') {
     if (fmt[i] == '%') {
@@ -375,41 +380,41 @@ size_t xvprintf(xout_t out, void *param, const char *fmt, va_list *ap) {
         }
         for (j = 0; j < xl && w > 0; j++) w--;
         for (j = 0; pad == ' ' && !minus && k < w && j + k < w; j++)
-          n += scpy(out, param, &pad, 1);
-        n += scpy(out, param, (char *) "0x", xl);
+          n += scpy(fn, param, &pad, 1);
+        n += scpy(fn, param, (char *) "0x", xl);
         for (j = 0; pad == '0' && k < w && j + k < w; j++)
-          n += scpy(out, param, &pad, 1);
-        n += scpy(out, param, tmp, k);
+          n += scpy(fn, param, &pad, 1);
+        n += scpy(fn, param, tmp, k);
         for (j = 0; pad == ' ' && minus && k < w && j + k < w; j++)
-          n += scpy(out, param, &pad, 1);
+          n += scpy(fn, param, &pad, 1);
       } else if (c == 'm' || c == 'M') {
         xfmt_t f = va_arg(*ap, xfmt_t);
-        if (c == 'm') out('"', param);
-        n += f(out, param, ap);
-        if (c == 'm') n += 2, out('"', param);
+        if (c == 'm') fn('"', param);
+        n += f(fn, param, ap);
+        if (c == 'm') n += 2, fn('"', param);
       } else if (c == 'c') {
         int ch = va_arg(*ap, int);
-        out((char) ch, param);
+        fn((char) ch, param);
         n++;
       } else if (c == 's') {
         char *p = va_arg(*ap, char *);
         if (pr == ~0U) pr = p == NULL ? 0 : strlen(p);
         for (j = 0; !minus && pr < w && j + pr < w; j++)
-          n += scpy(out, param, &pad, 1);
-        n += scpy(out, param, p, pr);
+          n += scpy(fn, param, &pad, 1);
+        n += scpy(fn, param, p, pr);
         for (j = 0; minus && pr < w && j + pr < w; j++)
-          n += scpy(out, param, &pad, 1);
+          n += scpy(fn, param, &pad, 1);
       } else if (c == '%') {
-        out('%', param);
+        fn('%', param);
         n++;
       } else {
-        out('%', param);
-        out(c, param);
+        fn('%', param);
+        fn(c, param);
         n += 2;
       }
       i++;
     } else {
-      out(fmt[i], param), n++, i++;
+      fn(fmt[i], param), n++, i++;
     }
   }
   return n;
@@ -642,6 +647,43 @@ long json_get_long(const char *buf, int len, const char *path, long dflt) {
   double v;
   if (json_get_num(buf, len, path, &v)) dflt = (long) v;
   return dflt;
+}
+
+static char xnibble(char c) {
+  return c < 10 ? c + '0' : c + 'W';
+}
+
+void xhexdump(void (*fn)(char, void *), void *a, const void *buf, size_t len) {
+  const uint8_t *p = (const uint8_t *) buf;
+  char ascii[16];
+  size_t i, j, n = 0;
+  for (i = 0; i < len; i++) {
+    if ((i & 15) == 0) {
+      // Print buffered ascii chars
+      if (i > 0) {
+        fn(' ', a), fn(' ', a);
+        for (j = 0; j < sizeof(ascii); j++) fn(ascii[j], a);
+        fn('\n', a), n = 0;
+      }
+      // Print hex address, then \t
+      fn(xnibble((i >> 12) & 15), a), fn(xnibble((i >> 8) & 15), a);
+      fn(xnibble((i >> 4) & 15), a), fn('0', a);
+      fn(' ', a), fn(' ', a), fn(' ', a);
+    }
+    fn(xnibble(p[i] >> 4), a), fn(xnibble(p[i] & 15), a);
+    fn(' ', a);  // Space after hex number
+    if (p[i] >= ' ' && p[i] <= '~') {
+      ascii[n++] = (char) p[i];  // Printable
+    } else {
+      ascii[n++] = '.';  // Non-printable
+    }
+  }
+  if (n > 0) {
+    while (n < 16) fn(' ', a), fn(' ', a), fn(' ', a), ascii[n++] = ' ';
+    fn(' ', a), fn(' ', a);
+    for (j = 0; j < sizeof(ascii); j++) fn(ascii[j], a);
+  }
+  fn('\n', a);
 }
 
 #endif  // STR_API_ONLY
