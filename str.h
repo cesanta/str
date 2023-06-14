@@ -654,7 +654,7 @@ static char xnibble(char c) {
 }
 
 void xhexdump(void (*fn)(char, void *), void *a, const void *buf, size_t len) {
-  const uint8_t *p = (const uint8_t *) buf;
+  const unsigned char *p = (const unsigned char *) buf;
   char ascii[16];
   size_t i, j, n = 0;
   for (i = 0; i < len; i++) {
@@ -670,7 +670,7 @@ void xhexdump(void (*fn)(char, void *), void *a, const void *buf, size_t len) {
       fn(xnibble((i >> 4) & 15), a), fn('0', a);
       fn(' ', a), fn(' ', a), fn(' ', a);
     }
-    fn(xnibble(p[i] >> 4), a), fn(xnibble(p[i] & 15), a);
+    fn(xnibble((p[i] >> 4) & 15), a), fn(xnibble(p[i] & 15), a);
     fn(' ', a);  // Space after hex number
     if (p[i] >= ' ' && p[i] <= '~') {
       ascii[n++] = (char) p[i];  // Printable
