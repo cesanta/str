@@ -201,10 +201,10 @@ json_get_num("{\"a\":1.23}", 10, "$.a", &d));   // d == 1.23
 ### json\_get\_bool()
 
 ```c
-int mg_json_get_bool(struct mg_str json, const char *path, int *v);
+int json_get_bool(const char *buf, int len, const char *path, int *val);
 ```
 
-Fetch boolean (bool) value from the json string `json` at JSON path
+Fetch boolean (bool) value from the json string `buf` at JSON path
 `path` into a placeholder `v`. Return true if successful.
 
 Parameters:
