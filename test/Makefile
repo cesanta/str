@@ -29,7 +29,7 @@ arm:
 	arm-none-eabi-gcc $(SOURCES) syscalls.c -I.. -W -Wall -Wextra -Os -mcpu=cortex-m0 -mfloat-abi=soft -nostdlib -lc -lgcc -e main
 
 arduino:
-	curl -s http://downloads.arduino.cc/arduino-1.8.13-linux64.tar.xz -o /tmp/a.tgz
+	curl -Ls http://downloads.arduino.cc/arduino-1.8.13-linux64.tar.xz -o /tmp/a.tgz
 	tar -xf /tmp/a.tgz
 	mv arduino-* $@
 

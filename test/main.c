@@ -208,10 +208,11 @@ static void test_json(void) {
 
 static void test_base64(void) {
   char a[100], b[100];
+  const char *expected = "\"aGk=\"";
   memset(a, ' ', sizeof(a));
   memset(b, ' ', sizeof(b));
   xsnprintf(a, sizeof(a), "%m", fmt_b64, 2, "hi");
-  assert(strcmp(a, "\"aGk=\"") == 0);
+  assert(strcmp(a, expected) == 0);
   assert(json_get_b64(a, (int) strlen(a), "$", b, sizeof(b)) == 2);
   assert(strcmp(b, "hi") == 0);
 }
