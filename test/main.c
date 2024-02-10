@@ -173,22 +173,23 @@ static void test_m(void) {
   assert(sf("_127.0.0.1_123", "_%M_%d", fmt_ip4, &ip4, 123));
   assert(sf("_[164:2100:0:0:0:0:0:0]_123", "_%M_%d", fmt_ip6, ip6, 123));
   assert(sf("_01:02:03:04:05:06_123", "_%M_%d", fmt_mac, mac, 123));
-  assert(sf(esc, "_%M_%d", ESC("a\nb"), 123));
+  assert(sf(esc, "_%M_%d", XESC("a\nb"), 123));
   assert(sf("_eHl6_123", "_%M_%d", fmt_b64, 3, "xyz", 123));
   assert(sf(quo, "_%m_%d", fmt_ip4, &ip4, 123));
-  assert(sf(quo, "_%m_%d", ESC("127.0.0.1"), 123));
+  assert(sf(quo, "_%m_%d", XESC("127.0.0.1"), 123));
 
   xprintf(out, NULL, "%s: %g\n", "dbl", 1.234);  // dbl: 1.234
   xprintf(out, NULL, "%.*s\n", 3, "foobar");     // foo
   xprintf(out, NULL, "%#04x\n", 11);             // 0x0b
   xprintf(out, NULL, "%d %5s\n", 7, "pad");      // 7   pad
   // JSON: {"value": 1.234}
-  xprintf(out, NULL, "JSON: {%m: %g}\n", ESC("value"), 1.234);
+  xprintf(out, NULL, "JSON: {%m: %g}\n", XESC("value"), 1.234);
 }
 
 static void test_json(void) {
   char buf[100];
   const char *s = "{\"a\": -42, \"b\": [\"hi\\t\\u0020\", true, { }, -1.7e-2]}";
+  const char *s2 = "\"foobar\"";
   int ofs, n, b = 0, len = (int) strlen(s);
   double d = 0.0;
   assert(json_get_long(s, len, "$.a", 0) == -42);
@@ -201,6 +202,18 @@ static void test_json(void) {
   assert((ofs = json_get(s, len, "$.b[2]", &n)) > 0);
   assert(n == 3 && s[ofs] == '{' && s[ofs + 2] == '}');
   assert(json_get_num(s, len, "$.b[3]", &d) == 1 && d == -0.017);
+  assert((ofs = json_get(s2, (int) strlen(s2), "$", &n)) == 0);
+  assert(n == 8);
+}
+
+static void test_base64(void) {
+  char a[100], b[100];
+  memset(a, ' ', sizeof(a));
+  memset(b, ' ', sizeof(b));
+  xsnprintf(a, sizeof(a), "%m", fmt_b64, 2, "hi");
+  assert(strcmp(a, "\"aGk=\"") == 0);
+  assert(json_get_b64(a, (int) strlen(a), "$", b, sizeof(b)) == 2);
+  assert(strcmp(b, "hi") == 0);
 }
 
 int main(void) {
@@ -208,6 +221,7 @@ int main(void) {
   test_float();
   test_m();
   test_json();
+  test_base64();
   printf("SUCCESS\n");
   return 0;
 }

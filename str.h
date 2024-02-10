@@ -27,7 +27,7 @@ typedef int int32_t;
 extern "C" {
 #endif
 
-#define ESC(str) fmt_esc, 0, (str)
+#define XESC(str) fmt_esc, 0, (str)
 
 // Low level basic functions
 size_t xvprintf(void (*)(char, void *), void *, const char *, va_list *);
@@ -46,14 +46,17 @@ size_t fmt_esc(void (*fn)(char, void *), void *arg, va_list *ap);
 
 // Utility functions
 void xhexdump(void (*fn)(char, void *), void *arg, const void *buf, size_t len);
+size_t xb64_decode(const char *src, size_t slen, char *dst, size_t dlen);
 
 // JSON parsing API
 int json_get(const char *buf, int len, const char *path, int *size);
 int json_get_num(const char *buf, int len, const char *path, double *val);
 int json_get_bool(const char *buf, int len, const char *path, int *val);
+long json_get_long(const char *buf, int len, const char *path, long dflt);
 int json_get_str(const char *buf, int len, const char *path, char *dst,
                  size_t dlen);
-long json_get_long(const char *buf, int len, const char *path, long dflt);
+int json_get_b64(const char *buf, int len, const char *path, char *dst,
+                 size_t dlen);
 
 #if !defined(STR_API_ONLY)
 typedef void (*xout_t)(char, void *);                 // Output function
@@ -616,6 +619,47 @@ static int json_unescape(const char *buf, size_t len, char *to, size_t n) {
   return (int) j;
 }
 
+int xb64_decode_single(int c);
+int xb64_decode_single(int c) {
+  if (c >= 'A' && c <= 'Z') {
+    return c - 'A';
+  } else if (c >= 'a' && c <= 'z') {
+    return c + 26 - 'a';
+  } else if (c >= '0' && c <= '9') {
+    return c + 52 - '0';
+  } else if (c == '+') {
+    return 62;
+  } else if (c == '/') {
+    return 63;
+  } else if (c == '=') {
+    return 64;
+  } else {
+    return -1;
+  }
+}
+
+size_t xb64_decode(const char *src, size_t slen, char *dst, size_t dlen) {
+  const char *end = src == NULL ? NULL : src + slen;  // Cannot add to NULL
+  size_t len = 0;
+  if (dlen < slen / 4 * 3 + 1) goto fail;
+  while (src != NULL && src + 3 < end) {
+    int a = xb64_decode_single(src[0]), b = xb64_decode_single(src[1]),
+        c = xb64_decode_single(src[2]), d = xb64_decode_single(src[3]);
+    if (a == 64 || a < 0 || b == 64 || b < 0 || c < 0 || d < 0) goto fail;
+    dst[len++] = (char) ((a << 2) | (b >> 4));
+    if (src[2] != '=') {
+      dst[len++] = (char) ((b << 4) | (c >> 2));
+      if (src[3] != '=') dst[len++] = (char) ((c << 6) | d);
+    }
+    src += 4;
+  }
+  dst[len] = '\0';
+  return len;
+fail:
+  if (dlen > 0) dst[0] = '\0';
+  return 0;
+}
+
 int json_get_num(const char *buf, int len, const char *path, double *v) {
   int found = 0, n = 0, off = json_get(buf, len, path, &n);
   if (off >= 0 && (buf[off] == '-' || (buf[off] >= '0' && buf[off] <= '9'))) {
@@ -639,6 +683,15 @@ int json_get_str(const char *buf, int len, const char *path, char *dst,
   int result = -1, n = 0, off = json_get(buf, len, path, &n);
   if (off >= 0 && n > 1 && buf[off] == '"') {
     result = json_unescape(buf + off + 1, (size_t) (n - 2), dst, dlen);
+  }
+  return result;
+}
+
+int json_get_b64(const char *buf, int len, const char *path, char *dst,
+                 size_t dlen) {
+  int result = -1, n = 0, off = json_get(buf, len, path, &n);
+  if (off >= 0 && n > 1 && buf[off] == '"') {
+    result = (int) xb64_decode(buf + off + 1, (size_t) (n - 2), dst, dlen);
   }
   return result;
 }
