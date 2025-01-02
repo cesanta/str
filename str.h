@@ -19,8 +19,10 @@ typedef int int32_t;
 #define vsnprintf _vsnprintf
 #define snprintf _snprintf
 #define inline __inline
+typedef enum { false = 0, true = 1 } bool;
 #else
 #include <stdint.h>
+#include <stdbool.h>
 #endif
 
 #ifdef __cplusplus
@@ -45,6 +47,8 @@ size_t fmt_b64(void (*fn)(char, void *), void *arg, va_list *ap);
 size_t fmt_esc(void (*fn)(char, void *), void *arg, va_list *ap);
 
 // Utility functions
+struct xstr { char *buf; size_t len; };
+bool xmatch(struct xstr s, struct xstr p, struct xstr *caps);
 void xhexdump(void (*fn)(char, void *), void *arg, const void *buf, size_t len);
 size_t xb64_decode(const char *src, size_t slen, char *dst, size_t dlen);
 
@@ -737,6 +741,40 @@ void xhexdump(void (*fn)(char, void *), void *a, const void *buf, size_t len) {
     for (j = 0; j < sizeof(ascii); j++) fn(ascii[j], a);
   }
   fn('\n', a);
+}
+
+bool xmatch(struct xstr s, struct xstr p, struct xstr *caps) {
+  size_t i = 0, j = 0, ni = 0, nj = 0;
+  if (caps) caps->buf = NULL, caps->len = 0;
+  while (i < p.len || j < s.len) {
+    if (i < p.len && j < s.len &&
+        (p.buf[i] == '?' ||
+         (p.buf[i] != '*' && p.buf[i] != '#' && s.buf[j] == p.buf[i]))) {
+      if (caps == NULL) {
+      } else if (p.buf[i] == '?') {
+        caps->buf = &s.buf[j], caps->len = 1;     // Finalize `?` cap
+        caps++, caps->buf = NULL, caps->len = 0;  // Init next cap
+      } else if (caps->buf != NULL && caps->len == 0) {
+        caps->len = (size_t) (&s.buf[j] - caps->buf);  // Finalize current cap
+        caps++, caps->len = 0, caps->buf = NULL;       // Init next cap
+      }
+      i++, j++;
+    } else if (i < p.len && (p.buf[i] == '*' || p.buf[i] == '#')) {
+      if (caps && !caps->buf) caps->len = 0, caps->buf = &s.buf[j];  // Init cap
+      ni = i++, nj = j + 1;
+    } else if (nj > 0 && nj <= s.len && (p.buf[ni] == '#' || s.buf[j] != '/')) {
+      i = ni, j = nj;
+      if (caps && caps->buf == NULL && caps->len == 0) {
+        caps--, caps->len = 0;  // Restart previous cap
+      }
+    } else {
+      return false;
+    }
+  }
+  if (caps && caps->buf && caps->len == 0) {
+    caps->len = (size_t) (&s.buf[j] - caps->buf);
+  }
+  return true;
 }
 
 #endif  // STR_API_ONLY

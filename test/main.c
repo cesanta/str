@@ -217,12 +217,33 @@ static void test_base64(void) {
   assert(strcmp(b, "hi") == 0);
 }
 
+static struct xstr xstr_n(const char *s, size_t n) {
+  struct xstr str = {(char *) s, n};
+  return str;
+}
+
+static struct xstr xstr(const char *s) {
+  struct xstr str = {(char *) s, strlen(s)};
+  return str;
+}
+
+static void test_xmatch(void) {
+  struct xstr caps[3];
+  assert(xmatch(xstr_n("", 0), xstr_n("", 0), NULL) == true);
+  assert(xmatch(xstr("//a.c"), xstr("#.c"), NULL) == true);
+  assert(xmatch(xstr("a"), xstr("#"), caps) == true);
+  assert(xmatch(xstr("//a.c"), xstr("#.c"), caps) == true);
+  assert(xmatch(xstr("a_b_c_"), xstr("a*b*c"), caps) == false);
+  assert(xmatch(xstr("a__b_c"), xstr("a*b*c"), caps) == true);
+}
+
 int main(void) {
   test_std();
   test_float();
   test_m();
   test_json();
   test_base64();
+  test_xmatch();
   printf("SUCCESS\n");
   return 0;
 }

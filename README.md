@@ -176,7 +176,7 @@ ofs = json_get(buf, len, "$.b[1]", &size); // ofs = 19, size = 1
 ### json\_get\_num()
 
 ```c
-int mg_json_get_num(const char *buf, int len, const char *path, double *val);
+int json_get_num(const char *buf, int len, const char *path, double *val);
 ```
 
 Fetch numeric (double) value from the json string `buf`, `len` at JSON path
@@ -350,7 +350,51 @@ struct foo foo = {1, 2.34, "hi"};
 xsnprintf(buf, sizeof(buf), "%M", fmt_foo, &foo);
 ```
 
-## Printing to a dynamic memory
+### xmatch()
+
+```c
+struct xstr {
+  char *buf;
+  size_t len;
+};
+
+bool xmatch(struct xstr str, struct xstr pattern, struct xstr *caps);
+```
+
+Check if string `str` matches glob pattern `pattern`, and optionally capture
+wildcards into the provided array `caps`.
+
+> NOTE: If `caps` is not NULL, then the `caps` array size must be at least the
+> number of wildcard symbols in `pattern` plus 1. The last cap will be
+> initialized to an empty string.
+
+The glob pattern matching rules are as follows:
+
+- `?` matches any single character
+- `*` matches zero or more characters except `/`
+- `#` matches zero or more characters
+- any other character matches itself
+
+Parameters:
+- `str` - a string to match
+- `pattern` - a pattern to match against
+- `caps` - an optional array of captures for wildcard symbols `?`, `*`, '#'
+
+Return value: `true` if matches, `false` otherwise
+
+Usage example:
+
+```c
+// Assume that hm->uri holds /foo/bar. Then we can match the requested URI:
+struct xstr caps[3];  // Two wildcard symbols '*' plus 1
+struct xstr str = { "/hello/world", 12 };
+struct xstr pattern = { "/*/*", 4 };
+if (xmatch(str, pattern, caps)) {
+  // caps[0] holds `hello`, caps[1] holds `world`.
+}
+```
+
+## Printing to dynamic memory
 
 The `x*printf()` functions always return the total number of bytes that the
 result string takes. Therefore it is possible to print to a `malloc()-ed`
@@ -382,7 +426,7 @@ used for measurements.
 | Standard `snprintf`        | 87476     | 81420     |
 
 Notes:
-- by default, standard snrpintf does not support float, and `x*printf` does 
+- by default, standard snrpintf does not support float, and `x*printf` does
 - to enable float for ARM GCC (newlib), use `-u _printf_float`
 - to disable float for `x*printf`, use `-DNO_FLOAT`
 
