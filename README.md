@@ -11,6 +11,7 @@ following routines:
   standard specifiers (including floating point `%f` and `%g`) as well as
   non-standard `%m` and `%M` specifiers that allow custom formatting like JSON,
   hex, base64
+- `xmatch()` - glob pattern match with captures
 - `json_get()` - find element in a JSON string
 - `json_get_num()` - fetch numeric value from a JSON string
 - `json_get_bool()` - fetch boolean value from a JSON string
