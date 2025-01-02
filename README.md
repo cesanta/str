@@ -387,8 +387,8 @@ Usage example:
 ```c
 // Assume that hm->uri holds /foo/bar. Then we can match the requested URI:
 struct xstr caps[3];  // Two wildcard symbols '*' plus 1
-struct xstr str = { "/hello/world", 12 };
-struct xstr pattern = { "/*/*", 4 };
+struct xstr str = xstr_s("/hello/world");
+struct xstr pattern = xstr_s{ "/*/*");
 if (xmatch(str, pattern, caps)) {
   // caps[0] holds `hello`, caps[1] holds `world`.
 }

@@ -47,7 +47,12 @@ size_t fmt_b64(void (*fn)(char, void *), void *arg, va_list *ap);
 size_t fmt_esc(void (*fn)(char, void *), void *arg, va_list *ap);
 
 // Utility functions
-struct xstr { char *buf; size_t len; };
+struct xstr {
+  char *buf;
+  size_t len;
+};
+struct xstr xstr_n(const char *s, size_t n);
+struct xstr xstr_s(const char *s);
 bool xmatch(struct xstr s, struct xstr p, struct xstr *caps);
 void xhexdump(void (*fn)(char, void *), void *arg, const void *buf, size_t len);
 size_t xb64_decode(const char *src, size_t slen, char *dst, size_t dlen);
@@ -741,6 +746,16 @@ void xhexdump(void (*fn)(char, void *), void *a, const void *buf, size_t len) {
     for (j = 0; j < sizeof(ascii); j++) fn(ascii[j], a);
   }
   fn('\n', a);
+}
+
+struct xstr xstr_n(const char *s, size_t n) {
+  struct xstr str = {(char *) s, n};
+  return str;
+}
+
+struct xstr xstr_s(const char *s) {
+  struct xstr str = {(char *) s, strlen(s)};
+  return str;
 }
 
 bool xmatch(struct xstr s, struct xstr p, struct xstr *caps) {

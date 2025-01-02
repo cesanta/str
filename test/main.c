@@ -217,24 +217,14 @@ static void test_base64(void) {
   assert(strcmp(b, "hi") == 0);
 }
 
-static struct xstr xstr_n(const char *s, size_t n) {
-  struct xstr str = {(char *) s, n};
-  return str;
-}
-
-static struct xstr xstr(const char *s) {
-  struct xstr str = {(char *) s, strlen(s)};
-  return str;
-}
-
 static void test_xmatch(void) {
   struct xstr caps[3];
   assert(xmatch(xstr_n("", 0), xstr_n("", 0), NULL) == true);
-  assert(xmatch(xstr("//a.c"), xstr("#.c"), NULL) == true);
-  assert(xmatch(xstr("a"), xstr("#"), caps) == true);
-  assert(xmatch(xstr("//a.c"), xstr("#.c"), caps) == true);
-  assert(xmatch(xstr("a_b_c_"), xstr("a*b*c"), caps) == false);
-  assert(xmatch(xstr("a__b_c"), xstr("a*b*c"), caps) == true);
+  assert(xmatch(xstr_s("//a.c"), xstr_s("#.c"), NULL) == true);
+  assert(xmatch(xstr_s("a"), xstr_s("#"), caps) == true);
+  assert(xmatch(xstr_s("//a.c"), xstr_s("#.c"), caps) == true);
+  assert(xmatch(xstr_s("a_b_c_"), xstr_s("a*b*c"), caps) == false);
+  assert(xmatch(xstr_s("a__b_c"), xstr_s("a*b*c"), caps) == true);
 }
 
 int main(void) {
